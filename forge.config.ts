@@ -25,8 +25,7 @@ const config: ForgeConfig = {
         repository: {
           owner: 'xblbaseball',
           name: 'xbl-roster-importer',
-        },
-        prerelease: true
+        }
       }
     }
   ],
