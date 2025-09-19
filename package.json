@@ -1,7 +1,7 @@
 {
   "name": "xbl-roster-importer",
   "productName": "xbl-roster-importer",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "My Electron application description",
   "main": ".vite/build/main.js",
   "scripts": {
