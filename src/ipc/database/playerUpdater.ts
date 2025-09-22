@@ -8,6 +8,7 @@ import {
     getChemistryInt,
     getPositionInt,
     getPitchPositionInt,
+    getOptionType,
     OPTION_KEYS
 } from "../../shared/models/mappings";
 
@@ -28,13 +29,15 @@ export function createPlayerUpdateStatements(db: any): PlayerUpdateStatements {
         WHERE GUID = ?
     `);
     
-    // Generic update statement for all player options (can be reused for multiple option types)
+    // Generic upsert statement for all player options (can be reused for multiple option types)
     const updatePlayerOption = db.prepare(`
-        UPDATE t_baseball_player_options 
-        SET optionValue = ? 
-        WHERE baseballPlayerLocalID = (
-            SELECT localID FROM t_baseball_player_local_ids WHERE GUID = ?
-        ) AND optionKey = ?
+        INSERT INTO t_baseball_player_options (baseballPlayerLocalID, optionKey, optionValue, optionType)
+        VALUES (
+            (SELECT localID FROM t_baseball_player_local_ids WHERE GUID = ?),
+            ?, ?, ?
+        )
+        ON CONFLICT (baseballPlayerLocalID, optionKey) 
+        DO UPDATE SET optionValue = excluded.optionValue, optionType = excluded.optionType
     `);
 
     // Prepare delete statement for traits
@@ -151,9 +154,10 @@ export function updatePitcherPitchTypes(
             const pitchValue = rosterValue ? 1 : 0;
             
             const result = statements.updatePlayerOption.run(
-                pitchValue,
                 customPlayerGuidBuffer,
-                pitchType.optionKey
+                pitchType.optionKey,
+                pitchValue,
+                getOptionType(pitchType.optionKey)
             );
             
             if (result.changes === 0) {
@@ -201,9 +205,10 @@ export function updatePitcherAttributes(
     // Update arm angle for pitcher
     const armAngleInt = getArmAngleInt(rosterPlayer.angle);
     const angleResult = statements.updatePlayerOption.run(
-        armAngleInt,
         customPlayerGuidBuffer,
-        OPTION_KEYS.ARM_ANGLE
+        OPTION_KEYS.ARM_ANGLE,
+        armAngleInt,
+        getOptionType(OPTION_KEYS.ARM_ANGLE)
     );
     
     if (angleResult.changes === 0) {
@@ -213,9 +218,10 @@ export function updatePitcherAttributes(
     // Update batting hand
     const battingInt = getBattingHandInt(rosterPlayer.bat);
     const battingResult = statements.updatePlayerOption.run(
-        battingInt,
         customPlayerGuidBuffer,
-        OPTION_KEYS.BATTING_HAND
+        OPTION_KEYS.BATTING_HAND,
+        battingInt,
+        getOptionType(OPTION_KEYS.BATTING_HAND)
     );
     
     if (battingResult.changes === 0) {
@@ -225,9 +231,10 @@ export function updatePitcherAttributes(
     // Update throwing hand
     const throwingInt = getThrowingHandInt(rosterPlayer.throw);
     const throwingResult = statements.updatePlayerOption.run(
-        throwingInt,
         customPlayerGuidBuffer,
-        OPTION_KEYS.THROWING_HAND
+        OPTION_KEYS.THROWING_HAND,
+        throwingInt,
+        getOptionType(OPTION_KEYS.THROWING_HAND)
     );
     
     if (throwingResult.changes === 0) {
@@ -237,9 +244,10 @@ export function updatePitcherAttributes(
     // Update chemistry
     const chemistryInt = getChemistryInt(rosterPlayer.chemistry);
     const chemistryResult = statements.updatePlayerOption.run(
-        chemistryInt,
         customPlayerGuidBuffer,
-        OPTION_KEYS.CHEMISTRY
+        OPTION_KEYS.CHEMISTRY,
+        chemistryInt,
+        getOptionType(OPTION_KEYS.CHEMISTRY)
     );
     
     if (chemistryResult.changes === 0) {
@@ -249,9 +257,10 @@ export function updatePitcherAttributes(
     // Update primary position for pitcher (should always be 1 for "P")
     const primaryPositionInt = 1; // All pitchers have primary position "P" which is 1
     const primaryPositionResult = statements.updatePlayerOption.run(
-        primaryPositionInt,
         customPlayerGuidBuffer,
-        OPTION_KEYS.PRIMARY_POSITION
+        OPTION_KEYS.PRIMARY_POSITION,
+        primaryPositionInt,
+        getOptionType(OPTION_KEYS.PRIMARY_POSITION)
     );
 
     if (primaryPositionResult.changes === 0) {
@@ -266,9 +275,10 @@ export function updatePitcherAttributes(
     
     if (pitchPositionInt > 0) {
         const pitchPositionResult = statements.updatePlayerOption.run(
-            pitchPositionInt,
             customPlayerGuidBuffer,
-            OPTION_KEYS.PITCH_POSITION
+            OPTION_KEYS.PITCH_POSITION,
+            pitchPositionInt,
+            getOptionType(OPTION_KEYS.PITCH_POSITION)
         );
 
         if (pitchPositionResult.changes === 0) {
@@ -323,9 +333,10 @@ export function updatePositionPlayerAttributes(
     // Update batting hand
     const battingInt = getBattingHandInt(rosterPlayer.bat);
     const battingResult = statements.updatePlayerOption.run(
-        battingInt,
         customPlayerGuidBuffer,
-        OPTION_KEYS.BATTING_HAND
+        OPTION_KEYS.BATTING_HAND,
+        battingInt,
+        getOptionType(OPTION_KEYS.BATTING_HAND)
     );
     
     if (battingResult.changes === 0) {
@@ -335,9 +346,10 @@ export function updatePositionPlayerAttributes(
     // Update throwing hand
     const throwingInt = getThrowingHandInt(rosterPlayer.throw);
     const throwingResult = statements.updatePlayerOption.run(
-        throwingInt,
         customPlayerGuidBuffer,
-        OPTION_KEYS.THROWING_HAND
+        OPTION_KEYS.THROWING_HAND,
+        throwingInt,
+        getOptionType(OPTION_KEYS.THROWING_HAND)
     );
     
     if (throwingResult.changes === 0) {
@@ -347,9 +359,10 @@ export function updatePositionPlayerAttributes(
     // Update chemistry
     const chemistryInt = getChemistryInt(rosterPlayer.chemistry);
     const chemistryResult = statements.updatePlayerOption.run(
-        chemistryInt,
         customPlayerGuidBuffer,
-        OPTION_KEYS.CHEMISTRY
+        OPTION_KEYS.CHEMISTRY,
+        chemistryInt,
+        getOptionType(OPTION_KEYS.CHEMISTRY)
     );
     
     if (chemistryResult.changes === 0) {
@@ -359,9 +372,10 @@ export function updatePositionPlayerAttributes(
     // Update primary position
     const primaryPositionInt = getPositionInt(rosterPlayer.position);
     const primaryPositionResult = statements.updatePlayerOption.run(
-        primaryPositionInt,
         customPlayerGuidBuffer,
-        OPTION_KEYS.PRIMARY_POSITION
+        OPTION_KEYS.PRIMARY_POSITION,
+        primaryPositionInt,
+        getOptionType(OPTION_KEYS.PRIMARY_POSITION)
     );
 
     if (primaryPositionResult.changes === 0) {
@@ -371,9 +385,10 @@ export function updatePositionPlayerAttributes(
     // Update secondary position
     const secondaryPositionInt = getPositionInt(rosterPlayer.secondaryPosition);
     const secondaryPositionResult = statements.updatePlayerOption.run(
-        secondaryPositionInt,
         customPlayerGuidBuffer,
-        OPTION_KEYS.SECONDARY_POSITION
+        OPTION_KEYS.SECONDARY_POSITION,
+        secondaryPositionInt,
+        getOptionType(OPTION_KEYS.SECONDARY_POSITION)
     );
     
     if (secondaryPositionResult.changes === 0) {

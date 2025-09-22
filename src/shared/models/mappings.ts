@@ -171,6 +171,35 @@ export const OPTION_KEYS = {
     CHEMISTRY: 107
 } as const;
 
+// Function to get the correct optionType for each optionKey based on the database data
+export function getOptionType(optionKey: number): number {
+    // Based on the database data provided:
+    // optionType 0: Most general options including batting/throwing hands
+    // optionType 5: Position-related, pitch types, chemistry, arm angle
+    
+    switch (optionKey) {
+        case OPTION_KEYS.ARM_ANGLE:           // 49
+        case OPTION_KEYS.PRIMARY_POSITION:    // 54
+        case OPTION_KEYS.SECONDARY_POSITION:  // 55
+        case OPTION_KEYS.PITCH_POSITION:      // 57
+        case OPTION_KEYS.FOUR_SEAM:          // 58
+        case OPTION_KEYS.TWO_SEAM:           // 59
+        case OPTION_KEYS.SCREWBALL:          // 60
+        case OPTION_KEYS.CHANGEUP:           // 61
+        case OPTION_KEYS.FORK:               // 62
+        case OPTION_KEYS.CURVEBALL:          // 63
+        case OPTION_KEYS.SLIDER:             // 64
+        case OPTION_KEYS.CUTTER:             // 65
+        case OPTION_KEYS.CHEMISTRY:          // 107
+            return 5;
+        
+        case OPTION_KEYS.THROWING_HAND:       // 4
+        case OPTION_KEYS.BATTING_HAND:        // 5
+        default:
+            return 0;
+    }
+}
+
 // Converter functions
 export function getPlayerPosition(positionInt: number, pitchPosition: string | null | undefined): Position {
     // If it's a pitcher position and we have pitch position info, use that
