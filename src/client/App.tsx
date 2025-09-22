@@ -261,64 +261,75 @@ function App() {
         {/* Instructions Section */}
         <InstructionsAccordion />
 
-        <Box display="flex" gap={2}>
-          <FormControl fullWidth>
-            <InputLabel>Default League to Overwrite</InputLabel>
-            <Select
-              value={selectedBuiltInLeague?.guid || ''}
-              label="League to Override"
-              onChange={(e) => setSelectedBuiltInLeague(builtInLeagues.find(l => l.guid === e.target.value) || undefined)}
-            >
-              {builtInLeagues.map((league) => (
-                <MenuItem key={league.guid} value={league.guid}>{league.name}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+        {/* League and Team Selection Container */}
+        <Box display="grid" gridTemplateColumns="1fr auto 1fr" gap={2} alignItems="center">
+          <Box display="flex" flexDirection="column" gap={3}>
+            <FormControl fullWidth>
+              <InputLabel>Custom League</InputLabel>
+              <Select
+                value={customLeague?.guid || ''}
+                label="Custom League"
+                onChange={(e) => setCustomLeague(customLeagues.find(l => l.guid === e.target.value) || undefined)}
+              >
+                {customLeagues.map((league) => (
+                  <MenuItem key={league.guid} value={league.guid}>{league.name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
-          <FormControl fullWidth>
-            <InputLabel>Default Team to Overwrite</InputLabel>
-            <Select
-              value={selectedBuiltInTeam?.guid || ''}
-              label="Team to Override"
-              onChange={(e) => setSelectedBuiltInTeam(selectedBuiltInLeague?.teams.find(t => t.guid === e.target.value) || undefined)}
-            >
-              {(selectedBuiltInLeague?.teams || []).map((team) => (
-                <MenuItem key={team.guid} value={team.guid}>
-                  <TeamMenuItem team={team} />
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Box>
+            <FormControl fullWidth>
+              <InputLabel>Custom Team</InputLabel>
+              <Select
+                value={customTeam?.guid || ''}
+                label="Custom Team"
+                disabled={!customLeague}
+                onChange={(e) => handleCustomTeamSelected(customLeague?.teams.find(t => t.guid === e.target.value) || undefined)}
+              >
+                {(customLeague?.teams || []).map((team) => (
+                  <MenuItem key={team.guid} value={team.guid}>
+                    <TeamMenuItem team={team} />
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
 
-        <Box display="flex" gap={2}>
-          <FormControl fullWidth>
-            <InputLabel>Custom League</InputLabel>
-            <Select
-              value={customLeague?.guid || ''}
-              label="Custom League"
-              onChange={(e) => setCustomLeague(customLeagues.find(l => l.guid === e.target.value) || undefined)}
-            >
-              {customLeagues.map((league) => (
-                <MenuItem key={league.guid} value={league.guid}>{league.name}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <Box display="flex" alignItems="center" justifyContent="center" sx={{ width: '60px' }}>
+            <Typography variant="h4" sx={{ color: '#000', fontWeight: 'bold' }}>
+              →
+            </Typography>
+          </Box>
 
-          <FormControl fullWidth>
-            <InputLabel>Custom Team</InputLabel>
-            <Select
-              value={customTeam?.guid || ''}
-              label="Custom Team"
-              onChange={(e) => handleCustomTeamSelected(customLeague?.teams.find(t => t.guid === e.target.value) || undefined)}
-            >
-              {(customLeague?.teams || []).map((team) => (
-                <MenuItem key={team.guid} value={team.guid}>
-                  <TeamMenuItem team={team} />
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <Box display="flex" flexDirection="column" gap={3}>
+            <FormControl fullWidth>
+              <InputLabel>Default League to Overwrite</InputLabel>
+              <Select
+                value={selectedBuiltInLeague?.guid || ''}
+                label="League to Override"
+                onChange={(e) => setSelectedBuiltInLeague(builtInLeagues.find(l => l.guid === e.target.value) || undefined)}
+              >
+                {builtInLeagues.map((league) => (
+                  <MenuItem key={league.guid} value={league.guid}>{league.name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth>
+              <InputLabel>Default Team to Overwrite</InputLabel>
+              <Select
+                value={selectedBuiltInTeam?.guid || ''}
+                label="Team to Override"
+                disabled={!selectedBuiltInLeague}
+                onChange={(e) => setSelectedBuiltInTeam(selectedBuiltInLeague?.teams.find(t => t.guid === e.target.value) || undefined)}
+              >
+                {(selectedBuiltInLeague?.teams || []).map((team) => (
+                  <MenuItem key={team.guid} value={team.guid}>
+                    <TeamMenuItem team={team} />
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
         </Box>
 
         {duplicateTeamError && (

@@ -47,15 +47,15 @@ export function InstructionsAccordion() {
           <br />
           <strong>• Disable Steam Cloud Sync:</strong> Steam → Super Mega Baseball 4 → Properties → General → Steam Cloud (uncheck). You can re-enable this after confirming your import was successful.
           <br /><br />
-          
-          <strong>1. Select a default team to replace</strong>
-          <br />
-          Choose which team from the built-in leagues (Super Mega League, Creators Classic, or Legends League) you want to overwrite with your custom team. It's best to choose a team you never use for Pennant Race, Season, or Franchise Mode.
-          <br /><br />
-          
-          <strong>2. Choose your custom team</strong>
+
+          <strong>1. Choose your custom team</strong>
           <br />
           Pick the team from your custom league that you want to import into the default team slot. This team's player names should match the names in your roster sheet.
+          <br /><br />
+          
+          <strong>2. Select a default team to replace</strong>
+          <br />
+          Choose which team from the built-in leagues (Super Mega League, Creators Classic, or Legends League) you want to overwrite with your custom team. It's best to choose a team you never use for Pennant Race, Season, or Franchise Mode.
           <br /><br />
           
           <strong>3. Load roster data</strong>
