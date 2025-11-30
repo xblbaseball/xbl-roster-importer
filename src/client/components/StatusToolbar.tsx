@@ -26,11 +26,14 @@ interface StatusToolbarProps {
   setSaveDirectory: (value: string) => void;
   assetsDirectory: string;
   setAssetsDirectory: (value: string) => void;
+  steamInstallDirectory: string;
+  setSteamInstallDirectory: (value: string) => void;
   steamIdWarning: string | null;
   cloudSyncWarning: string | null;
   isCloudSyncEnabled: boolean;
   isSaveDirectoryValid: boolean;
   isAssetsDirectoryValid: boolean;
+  isSteamInstallDirectoryValid: boolean;
   isCheckingCloudSync: boolean;
   recheckCloudSync: () => void;
   lastBackupDate: Date | null;
@@ -43,11 +46,14 @@ export function StatusToolbar({
   setSaveDirectory,
   assetsDirectory,
   setAssetsDirectory,
+  steamInstallDirectory,
+  setSteamInstallDirectory,
   steamIdWarning,
   cloudSyncWarning,
   isCloudSyncEnabled,
   isSaveDirectoryValid,
   isAssetsDirectoryValid,
+  isSteamInstallDirectoryValid,
   isCheckingCloudSync,
   recheckCloudSync,
   lastBackupDate,
@@ -188,6 +194,17 @@ export function StatusToolbar({
                 size="small"
               />
               {isAssetsDirectoryValid ? <CheckCircleIcon color="success" /> : <ErrorRoundedIcon color='error' />}
+            </Box>
+
+            <Box display="flex" alignItems="center" gap={2}>
+              <TextField
+                fullWidth
+                label="Steam Installation Directory"
+                value={steamInstallDirectory}
+                onChange={(e) => setSteamInstallDirectory(e.target.value)}
+                size="small"
+              />
+              {isSteamInstallDirectoryValid ? <CheckCircleIcon color="success" /> : <ErrorRoundedIcon color='error' />}
             </Box>
 
             <Box display="flex" alignItems="center" gap={2}>

@@ -43,11 +43,14 @@ function App() {
     setSaveDirectory,
     assetsDirectory,
     setAssetsDirectory,
+    steamInstallDirectory,
+    setSteamInstallDirectory,
     steamIdWarning,
     cloudSyncWarning,
     isCloudSyncEnabled,
     isSaveDirectoryValid,
     isAssetsDirectoryValid,
+    isSteamInstallDirectoryValid,
     isCheckingCloudSync,
     recheckCloudSync,
   } = useSteamDirectoryValidation();
@@ -546,11 +549,14 @@ function App() {
         setSaveDirectory={setSaveDirectory}
         assetsDirectory={assetsDirectory}
         setAssetsDirectory={setAssetsDirectory}
+        steamInstallDirectory={steamInstallDirectory}
+        setSteamInstallDirectory={setSteamInstallDirectory}
         steamIdWarning={steamIdWarning}
         cloudSyncWarning={cloudSyncWarning}
         isCloudSyncEnabled={isCloudSyncEnabled}
         isSaveDirectoryValid={isSaveDirectoryValid}
         isAssetsDirectoryValid={isAssetsDirectoryValid}
+        isSteamInstallDirectoryValid={isSteamInstallDirectoryValid}
         isCheckingCloudSync={isCheckingCloudSync}
         recheckCloudSync={recheckCloudSync}
         lastBackupDate={lastBackupDate}
