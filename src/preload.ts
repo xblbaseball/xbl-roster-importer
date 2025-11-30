@@ -10,7 +10,7 @@ export interface ElectronAPI {
     error?: string;
     warning?: string;
   }>;
-  checkSteamCloudSync: (gameSaveSteamId: string) => Promise<{
+  checkSteamCloudSync: (gameSaveSteamId: string, steamInstallDirectory: string) => Promise<{
     invalidSteamCloudSyncState: boolean;
     error?: string;
   }>;
@@ -28,7 +28,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   checkDirectory: (path: string) => ipcRenderer.invoke('check-directory', path),
   getUsername: () => ipcRenderer.invoke('get-username'),
   findSteamIds: (baseDirectory: string) => ipcRenderer.invoke('find-steam-ids', baseDirectory),
-  checkSteamCloudSync: (gameSaveSteamId: string) => ipcRenderer.invoke('check-steam-cloud-sync', gameSaveSteamId),
+  checkSteamCloudSync: (gameSaveSteamId: string, steamInstallDirectory: string) => ipcRenderer.invoke('check-steam-cloud-sync', gameSaveSteamId, steamInstallDirectory),
   loadCustomLeagues: (saveDirectory: string) => ipcRenderer.invoke('load-custom-leagues', saveDirectory),
   loadBuiltInLeagues: (assetsDirectory: string) => ipcRenderer.invoke('load-built-in-leagues', assetsDirectory),
   readBuiltInLeagues: () => ipcRenderer.invoke('read-built-in-leagues'),

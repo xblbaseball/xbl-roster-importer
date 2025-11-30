@@ -113,11 +113,11 @@ ipcMain.handle('find-steam-ids', (_event, baseDirectory) => {
   }
 });
 
-ipcMain.handle('check-steam-cloud-sync', (_event, gameSaveSteamId) => {
+ipcMain.handle('check-steam-cloud-sync', (_event, gameSaveSteamId, steamInstallDirectory) => {
   try {
     // The gameSaveSteamId is from the save directory, but we need to find the Steam user ID
     // for the config files. Let's try to find it by checking the Steam userdata directory
-    const steamUserdataPath = 'C:\\Program Files (x86)\\Steam\\userdata';
+    const steamUserdataPath = path.join(steamInstallDirectory, 'userdata');
     
     if (!fs.existsSync(steamUserdataPath)) {
       return { 
