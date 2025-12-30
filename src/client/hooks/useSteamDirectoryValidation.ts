@@ -2,13 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 
 export const useSteamDirectoryValidation = () => {
   const [saveDirectory, setSaveDirectory] = useState('');
-  const [assetsDirectory, setAssetsDirectory] = useState('C:\\Program Files (x86)\\Steam\\steamapps\\common\\Super Mega Baseball 4\\D3D12\\assets\\database\\baseball');
   const [steamInstallDirectory, setSteamInstallDirectory] = useState('C:\\Program Files (x86)\\Steam');
   const [steamIdWarning, setSteamIdWarning] = useState<string | null>(null);
   const [cloudSyncWarning, setCloudSyncWarning] = useState<string | null>(null);
   const [isCloudSyncEnabled, setIsCloudSyncEnabled] = useState(false);
   const [isSaveDirectoryValid, setIsSaveDirectoryValid] = useState(false);
-  const [isAssetsDirectoryValid, setIsAssetsDirectoryValid] = useState(false);
   const [isSteamInstallDirectoryValid, setIsSteamInstallDirectoryValid] = useState(false);
   const [isCheckingCloudSync, setIsCheckingCloudSync] = useState(false);
 
@@ -84,31 +82,26 @@ export const useSteamDirectoryValidation = () => {
   // Effect to validate directories
   useEffect(() => {
     const checkDirectories = async () => {
-      const [saveValid, assetsValid, steamValid] = await Promise.all([
+      const [saveValid, steamValid] = await Promise.all([
         window.electronAPI.checkDirectory(saveDirectory),
-        window.electronAPI.checkDirectory(assetsDirectory),
         window.electronAPI.checkDirectory(steamInstallDirectory)
       ]);
       setIsSaveDirectoryValid(saveValid);
-      setIsAssetsDirectoryValid(assetsValid);
       setIsSteamInstallDirectoryValid(steamValid);
     };
 
     checkDirectories();
-  }, [saveDirectory, assetsDirectory, steamInstallDirectory]);
+  }, [saveDirectory, steamInstallDirectory]);
 
   return {
     saveDirectory,
     setSaveDirectory,
-    assetsDirectory,
-    setAssetsDirectory,
     steamInstallDirectory,
     setSteamInstallDirectory,
     steamIdWarning,
     cloudSyncWarning,
     isCloudSyncEnabled,
     isSaveDirectoryValid,
-    isAssetsDirectoryValid,
     isSteamInstallDirectoryValid,
     isCheckingCloudSync,
     recheckCloudSync,

@@ -24,47 +24,35 @@ import CloseIcon from '@mui/icons-material/Close';
 interface StatusToolbarProps {
   saveDirectory: string;
   setSaveDirectory: (value: string) => void;
-  assetsDirectory: string;
-  setAssetsDirectory: (value: string) => void;
   steamInstallDirectory: string;
   setSteamInstallDirectory: (value: string) => void;
   steamIdWarning: string | null;
   cloudSyncWarning: string | null;
   isCloudSyncEnabled: boolean;
   isSaveDirectoryValid: boolean;
-  isAssetsDirectoryValid: boolean;
   isSteamInstallDirectoryValid: boolean;
   isCheckingCloudSync: boolean;
   recheckCloudSync: () => void;
-  lastBackupDate: Date | null;
-  onRestoreBackup: () => void;
-  isRestoreLoading: boolean;
 }
 
 export function StatusToolbar({
   saveDirectory,
   setSaveDirectory,
-  assetsDirectory,
-  setAssetsDirectory,
   steamInstallDirectory,
   setSteamInstallDirectory,
   steamIdWarning,
   cloudSyncWarning,
   isCloudSyncEnabled,
   isSaveDirectoryValid,
-  isAssetsDirectoryValid,
   isSteamInstallDirectoryValid,
   isCheckingCloudSync,
   recheckCloudSync,
-  lastBackupDate,
-  onRestoreBackup,
-  isRestoreLoading,
 }: StatusToolbarProps) {
   const [isConfigDialogOpen, setIsConfigDialogOpen] = useState(false);
 
   // Determine overall system status
   const getSystemStatus = () => {
-    if (!isSaveDirectoryValid || !isAssetsDirectoryValid) return 'error';
+    if (!isSaveDirectoryValid) return 'error';
     if (isCloudSyncEnabled) return 'warning';
     return 'success';
   };
@@ -114,14 +102,6 @@ export function StatusToolbar({
               <Tooltip title={`Save Directory: ${isSaveDirectoryValid ? 'Valid' : 'Invalid'}`}>
                 <Box display="flex" alignItems="center">
                   {isSaveDirectoryValid ? 
-                    <CheckCircleIcon fontSize="small" color="success" /> : 
-                    <ErrorRoundedIcon fontSize="small" color="error" />
-                  }
-                </Box>
-              </Tooltip>
-              <Tooltip title={`Assets Directory: ${isAssetsDirectoryValid ? 'Valid' : 'Invalid'}`}>
-                <Box display="flex" alignItems="center">
-                  {isAssetsDirectoryValid ? 
                     <CheckCircleIcon fontSize="small" color="success" /> : 
                     <ErrorRoundedIcon fontSize="small" color="error" />
                   }
@@ -188,47 +168,12 @@ export function StatusToolbar({
             <Box display="flex" alignItems="center" gap={2}>
               <TextField
                 fullWidth
-                label="Game Assets Directory"
-                value={assetsDirectory}
-                onChange={(e) => setAssetsDirectory(e.target.value)}
-                size="small"
-              />
-              {isAssetsDirectoryValid ? <CheckCircleIcon color="success" /> : <ErrorRoundedIcon color='error' />}
-            </Box>
-
-            <Box display="flex" alignItems="center" gap={2}>
-              <TextField
-                fullWidth
                 label="Steam Installation Directory"
                 value={steamInstallDirectory}
                 onChange={(e) => setSteamInstallDirectory(e.target.value)}
                 size="small"
               />
               {isSteamInstallDirectoryValid ? <CheckCircleIcon color="success" /> : <ErrorRoundedIcon color='error' />}
-            </Box>
-
-            <Box display="flex" alignItems="center" gap={2}>
-              <Button
-                variant="outlined"
-                color="secondary"
-                disabled={!isAssetsDirectoryValid || !isSaveDirectoryValid || isRestoreLoading}
-                onClick={onRestoreBackup}
-                startIcon={isRestoreLoading ? <CircularProgress size={16} color="inherit" /> : undefined}
-                sx={{ minWidth: '140px', whiteSpace: 'nowrap' }}
-                size="small"
-              >
-                {isRestoreLoading ? 'Restoring...' : 'Restore Backup'}
-              </Button>
-              <Box display="flex" flexDirection="column">
-                <Typography variant="body2" sx={{ color: '#666', fontStyle: 'italic' }}>
-                  Restores original 3 default league files from backup
-                </Typography>
-                {lastBackupDate && (
-                  <Typography variant="caption" sx={{ color: '#888', fontSize: '0.75rem' }}>
-                    Last backup: {lastBackupDate.toLocaleString()}
-                  </Typography>
-                )}
-              </Box>
             </Box>
 
             {steamIdWarning && (

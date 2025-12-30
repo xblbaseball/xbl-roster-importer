@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { League } from '../../shared/models/league';
 
-export function useGameFiles(isSaveDirectoryValid: boolean, saveDirectory: string, isAssetsDirectoryValid: boolean, assetsDirectory: string) {
-  const [builtInLeagues, setBuiltInLeagues] = useState<League[]>([]);
+export function useGameFiles(isSaveDirectoryValid: boolean, saveDirectory: string) {
   const [customLeagues, setCustomLeagues] = useState<League[]>([]);
 
   useEffect(() => {
@@ -14,20 +13,12 @@ export function useGameFiles(isSaveDirectoryValid: boolean, saveDirectory: strin
           setCustomLeagues(customLeagues);
         }
       }
-      if (isAssetsDirectoryValid) {
-        const builtInLeaguesLoaded = await window.electronAPI.loadBuiltInLeagues(assetsDirectory);
-        if (builtInLeaguesLoaded) {
-          const builtInLeagues = await window.electronAPI.readBuiltInLeagues();
-          setBuiltInLeagues(builtInLeagues);
-        }
-      }
     };
 
     loadGameFiles();
-  }, [isSaveDirectoryValid, isAssetsDirectoryValid, saveDirectory, assetsDirectory]);
+  }, [isSaveDirectoryValid, saveDirectory]);
 
   return {
-    builtInLeagues,
     customLeagues,
   };
 }
