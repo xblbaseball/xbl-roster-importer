@@ -34,6 +34,7 @@ import { useGameFiles } from './hooks/useGameFiles';
 import { TeamMenuItem } from './components/TeamMenuItem';
 import { StatusToolbar } from './components/StatusToolbar';
 import { InstructionsAccordion } from './components/InstructionsAccordion';
+import { ValidationBanner } from './components/ValidationBanner';
 
 function App() {
 
@@ -67,6 +68,7 @@ function App() {
   const [isPlayBallLoading, setIsPlayBallLoading] = useState(false);
   const [playBallSuccess, setPlayBallSuccess] = useState(false);
   const [playBallError, setPlayBallError] = useState<string | null>(null);
+  const [isRefreshingLeague, setIsRefreshingLeague] = useState(false);
 
   const playerComparisons = usePlayerComparison(players, customPlayers);
   const { isPlayerValid, isRosterValid, validationMessage } = usePlayerValidation(players);
@@ -121,6 +123,36 @@ function App() {
       }
 
       loadCustomTeamPlayers();
+    }
+  }
+
+  const handleRefreshValidation = async () => {
+    if (!customTeam || !customLeague) {
+      return;
+    }
+
+    setIsRefreshingLeague(true);
+    setIsLoadingSheet(true);
+    setHasAttemptedSheetLoad(true);
+    
+    try {
+      // Reload both custom team players and roster sheet data
+      const [loadedCustomPlayers, sheetData] = await Promise.all([
+        window.electronAPI.loadPlayersByTeam(customTeam.guid, customLeague.databasePath),
+        rosterLink ? loadPlayersFromSheet(rosterLink) : Promise.resolve({ players: [], lastUpdated: null })
+      ]);
+      
+      setCustomPlayers(loadedCustomPlayers);
+      
+      if (rosterLink && sheetData) {
+        setPlayers(sheetData.players);
+        setSheetLastUpdated(sheetData.lastUpdated);
+      }
+    } catch (error) {
+      console.error('Failed to refresh data:', error);
+    } finally {
+      setIsRefreshingLeague(false);
+      setIsLoadingSheet(false);
     }
   }
 
@@ -241,11 +273,11 @@ function App() {
           </Box>
         )}
 
-        {validationMessage && (
-          <Alert severity={validationMessage.type}>
-            {validationMessage.message}
-          </Alert>
-        )}
+        <ValidationBanner 
+          validationMessage={validationMessage}
+          onRefresh={handleRefreshValidation}
+          isRefreshing={isRefreshingLeague}
+        />
 
         <TableContainer component={Paper}>
           <Table size="small" sx={{ '& .MuiTableCell-root': { py: 1 } }}>
