@@ -1,11 +1,13 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs';
 import started from 'electron-squirrel-startup';
 import { updateElectronApp } from 'update-electron-app';
-import { copyBuiltInLeagueDbFiles, processSaveFiles, readBuiltInLeagues, readCustomLeagues, handlePlayBallFileOperations, restoreFromBackup, getBackupInfo } from './ipc/gameFiles';
-import { copyTeamData, replaceBuiltInTeamPlayers, getPlayersByTeamGuid } from './ipc/database/database';
-import { updateCustomPlayerAttributes } from "./ipc/database/playerUpdater";
+import { processSaveFiles, readCustomLeagues, saveCustomLeague } from './ipc/gameFiles';
+import { getPlayersByTeamGuid } from './ipc/database/database';
+import { updatePlayerAttributes } from "./ipc/database/playerUpdater";
+import { createLeagueBackup, getLeagueBackups, restoreLeagueBackup } from './ipc/backupService';
+import { BACKUPS_DIRECTORY_NAME } from './shared/constants';
 
 updateElectronApp();
 
@@ -191,18 +193,9 @@ ipcMain.handle('check-steam-cloud-sync', (_event, gameSaveSteamId, steamInstallD
   }
 });
 
-ipcMain.handle('load-built-in-leagues', async (_event, assetsDirectory) => {
-  await copyBuiltInLeagueDbFiles(assetsDirectory);
-  return true;
-});
-
 ipcMain.handle('load-custom-leagues', async (_event, saveDirectory) => {
   await processSaveFiles(saveDirectory);
   return true;
-});
-
-ipcMain.handle('read-built-in-leagues', async (_event) => {
-  return await readBuiltInLeagues();
 });
 
 ipcMain.handle('read-custom-leagues', async (_event) => {
@@ -213,29 +206,33 @@ ipcMain.handle('load-players-by-team', async (_event, teamGuid, databasePath) =>
   return await getPlayersByTeamGuid(databasePath, teamGuid);
 });
 
-ipcMain.handle('play-ball', async (_event, builtInTeamGuid, customTeamGuid, builtInDbPath, customDbPath, saveDirectory, assetsDirectory, playerPairs) => {
+ipcMain.handle('play-ball', async (_event, teamGuid, databasePath, saveDirectory, playerPairs) => {
   try {
-    console.log(`=== PlayBall Operations for ${builtInTeamGuid} ← ${customTeamGuid} ===`);
+    console.log(`=== PlayBall Operations for custom team ${teamGuid} ===`);
     
-    // Convert GUID strings to buffers for database operations
-    const builtInTeamGuidBuffer = Buffer.from(builtInTeamGuid.replace(/-/g, ''), 'hex');
-    const customTeamGuidBuffer = Buffer.from(customTeamGuid.replace(/-/g, ''), 'hex');
+    // Convert GUID string to buffer for database operations
+    const teamGuidBuffer = Buffer.from(teamGuid.replace(/-/g, ''), 'hex');
     
-    // Step 1: Copy team data (logos and attributes) from custom to built-in team
-    const teamGuids = await copyTeamData(builtInTeamGuidBuffer, customTeamGuidBuffer, builtInDbPath, customDbPath);
-
-    // Step 2: Rewrite team players, using roster player attributes to modify the matching custom team players
+    // Step 0: Create backup of the league .sav file before making any changes
+    const leagueName = path.basename(databasePath, '.sqlite');
+    const savFilePath = path.join(saveDirectory, `${leagueName}.sav`);
+    
+    if (fs.existsSync(savFilePath)) {
+      console.log(`Creating backup of ${savFilePath} before modifications...`);
+      await createLeagueBackup(savFilePath);
+    } else {
+      console.log(`No existing .sav file found at ${savFilePath}, skipping backup`);
+    }
+    
+    // Step 1: Update player attributes in custom database (if roster data provided)
     if (playerPairs && playerPairs.length > 0) {
-      await updateCustomPlayerAttributes(customTeamGuidBuffer, customDbPath, playerPairs);
+      await updatePlayerAttributes(teamGuidBuffer, databasePath, playerPairs);
     } else {
       console.log('No player pairs provided, skipping player attribute updates');
     }
-
-    // Step 3: Replace built-in team players with custom team players
-    await replaceBuiltInTeamPlayers(teamGuids.builtInTeamGuid, teamGuids.customTeamGuid, builtInDbPath, customDbPath);
     
-    // Step 4: Handle file operations (delete save files and copy database)
-    await handlePlayBallFileOperations(builtInDbPath, saveDirectory, assetsDirectory);
+    // Step 2: Compress and save custom database back to original .sav location
+    await saveCustomLeague(databasePath, saveDirectory);
     
     console.log('PlayBall operations completed successfully!');
     return true;
@@ -245,21 +242,31 @@ ipcMain.handle('play-ball', async (_event, builtInTeamGuid, customTeamGuid, buil
   }
 });
 
-ipcMain.handle('restore-from-backup', async (_event, assetsDirectory, saveDirectory) => {
+ipcMain.handle('get-league-backups', async () => {
   try {
-    await restoreFromBackup(assetsDirectory, saveDirectory);
-    return true;
+    return await getLeagueBackups();
   } catch (error) {
-    console.error('Error in restore-from-backup:', error);
+    console.error('Error getting league backups:', error);
     throw error;
   }
 });
 
-ipcMain.handle('get-backup-info', async (_event, assetsDirectory) => {
+ipcMain.handle('restore-league-backup', async (_event, backupFilePath, saveDirectory) => {
   try {
-    return await getBackupInfo(assetsDirectory);
+    return await restoreLeagueBackup(backupFilePath, saveDirectory);
   } catch (error) {
-    console.error('Error in get-backup-info:', error);
+    console.error('Error restoring league backup:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('open-backups-folder', async () => {
+  try {
+    const backupsPath = path.join(app.getPath('temp'), BACKUPS_DIRECTORY_NAME);
+    await shell.openPath(backupsPath);
+    return backupsPath;
+  } catch (error) {
+    console.error('Error opening backups folder:', error);
     throw error;
   }
 });

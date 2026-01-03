@@ -29,42 +29,35 @@ import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
 import { League, Team } from '../shared/models/league';
 import { usePlayerComparison, formatPropertyValue } from './hooks/usePlayerComparison';
 import { usePlayerValidation } from './hooks/usePlayerValidation';
-import { useTeamValidation } from './hooks/useTeamValidation';
 import { useSteamDirectoryValidation } from './hooks/useSteamDirectoryValidation';
 import { useGameFiles } from './hooks/useGameFiles';
 import { TeamMenuItem } from './components/TeamMenuItem';
 import { StatusToolbar } from './components/StatusToolbar';
 import { InstructionsAccordion } from './components/InstructionsAccordion';
+import { ValidationBanner } from './components/ValidationBanner';
 
 function App() {
 
   const {
     saveDirectory,
     setSaveDirectory,
-    assetsDirectory,
-    setAssetsDirectory,
     steamInstallDirectory,
     setSteamInstallDirectory,
     steamIdWarning,
     cloudSyncWarning,
     isCloudSyncEnabled,
     isSaveDirectoryValid,
-    isAssetsDirectoryValid,
     isSteamInstallDirectoryValid,
     isCheckingCloudSync,
     recheckCloudSync,
   } = useSteamDirectoryValidation();
 
-  const { builtInLeagues, customLeagues } = useGameFiles(
+  const { customLeagues, refreshLeagues } = useGameFiles(
     isSaveDirectoryValid,
-    saveDirectory,
-    isAssetsDirectoryValid,
-    assetsDirectory
+    saveDirectory
   );
 
   const [rosterLink, setRosterLink] = useState('');
-  const [selectedBuiltInLeague, setSelectedBuiltInLeague] = useState<League | undefined>(undefined);
-  const [selectedBuiltInTeam, setSelectedBuiltInTeam] = useState<Team | undefined>(undefined);
   const [customLeague, setCustomLeague] = useState<League | undefined>(undefined);
   const [customTeam, setCustomTeam] = useState<Team | undefined>(undefined);
   const [players, setPlayers] = useState<SheetPlayer[]>([]);
@@ -75,18 +68,10 @@ function App() {
   const [isPlayBallLoading, setIsPlayBallLoading] = useState(false);
   const [playBallSuccess, setPlayBallSuccess] = useState(false);
   const [playBallError, setPlayBallError] = useState<string | null>(null);
-  const [isRestoreLoading, setIsRestoreLoading] = useState(false);
-  const [restoreSuccess, setRestoreSuccess] = useState(false);
-  const [restoreError, setRestoreError] = useState<string | null>(null);
-  const [lastBackupDate, setLastBackupDate] = useState<Date | null>(null);
+  const [isRefreshingLeague, setIsRefreshingLeague] = useState(false);
 
   const playerComparisons = usePlayerComparison(players, customPlayers);
   const { isPlayerValid, isRosterValid, validationMessage } = usePlayerValidation(players);
-  const { duplicateTeamError, isTeamValidationPassed } = useTeamValidation(
-    selectedBuiltInLeague,
-    selectedBuiltInTeam,
-    customTeam
-  );
 
   useEffect(() => {
     if (customLeague) {
@@ -94,24 +79,6 @@ function App() {
       setCustomPlayers([]);
     }
   }, [customLeague]);
-
-  useEffect(() => {
-    const loadBackupInfo = async () => {
-      if (isAssetsDirectoryValid && assetsDirectory) {
-        try {
-          const backupInfo = await window.electronAPI.getBackupInfo(assetsDirectory);
-          setLastBackupDate(backupInfo?.lastBackupDate ? new Date(backupInfo.lastBackupDate) : null);
-        } catch (error) {
-          console.error('Failed to load backup info:', error);
-          setLastBackupDate(null);
-        }
-      } else {
-        setLastBackupDate(null);
-      }
-    };
-
-    loadBackupInfo();
-  }, [isAssetsDirectoryValid, assetsDirectory]);
 
   useEffect(() => {
     const loadPlayers = async () => {
@@ -159,9 +126,39 @@ function App() {
     }
   }
 
+  const handleRefreshValidation = async () => {
+    if (!customTeam || !customLeague) {
+      return;
+    }
+
+    setIsRefreshingLeague(true);
+    setIsLoadingSheet(true);
+    setHasAttemptedSheetLoad(true);
+    
+    try {
+      // Reload both custom team players and roster sheet data
+      const [loadedCustomPlayers, sheetData] = await Promise.all([
+        window.electronAPI.loadPlayersByTeam(customTeam.guid, customLeague.databasePath),
+        rosterLink ? loadPlayersFromSheet(rosterLink) : Promise.resolve({ players: [], lastUpdated: null })
+      ]);
+      
+      setCustomPlayers(loadedCustomPlayers);
+      
+      if (rosterLink && sheetData) {
+        setPlayers(sheetData.players);
+        setSheetLastUpdated(sheetData.lastUpdated);
+      }
+    } catch (error) {
+      console.error('Failed to refresh data:', error);
+    } finally {
+      setIsRefreshingLeague(false);
+      setIsLoadingSheet(false);
+    }
+  }
+
   const handlePlayBall = async () => {
-    if (!selectedBuiltInLeague || !selectedBuiltInTeam) {
-      console.error('Built-in league and team must be selected');
+    if (!customLeague || !customTeam) {
+      console.error('Custom league and team must be selected');
       return;
     }
 
@@ -171,21 +168,13 @@ function App() {
     setIsPlayBallLoading(true);
 
     try {
-      // Using custom team mode - update with roster data if available
-      if (!customLeague || !customTeam) {
-        throw new Error('Custom league and team must be selected when using custom team mode');
-      }
-      
       // Pass player comparisons if we have roster data loaded
       const playerPairsToPass = (players.length > 0 && customPlayers.length > 0) ? playerComparisons : undefined;
       
       await window.electronAPI.playBall(
-        selectedBuiltInTeam.guid,
         customTeam.guid,
-        selectedBuiltInLeague.databasePath,
         customLeague.databasePath,
         saveDirectory,
-        assetsDirectory,
         playerPairsToPass
       );
       
@@ -199,43 +188,9 @@ function App() {
     }
   };
 
-  const handleRestoreBackup = async () => {
-    if (!isAssetsDirectoryValid) {
-      console.error('Assets directory must be valid to restore backup');
-      return;
-    }
-
-    // Reset previous states
-    setRestoreError(null);
-    setRestoreSuccess(false);
-    setIsRestoreLoading(true);
-
-    try {
-      await window.electronAPI.restoreFromBackup(assetsDirectory);
-      console.log('Restore completed successfully!');
-      setRestoreSuccess(true);
-      
-      // Refresh backup info after successful restore
-      try {
-        const backupInfo = await window.electronAPI.getBackupInfo(assetsDirectory);
-        setLastBackupDate(backupInfo?.lastBackupDate ? new Date(backupInfo.lastBackupDate) : null);
-      } catch (error) {
-        console.error('Failed to refresh backup info after restore:', error);
-      }
-    } catch (error) {
-      console.error('Restore failed:', error);
-      setRestoreError(error instanceof Error ? error.message : 'An unknown error occurred');
-    } finally {
-      setIsRestoreLoading(false);
-    }
-  };
-
   // Disable Play Ball if any player is not matched or missing required attributes
   const allPlayersMatched = playerComparisons.length === 0 || playerComparisons.every(pc => pc.isMatched);
-  const isFormValid = selectedBuiltInLeague && selectedBuiltInTeam && (
-    (customLeague && customTeam) ||
-    (rosterLink && players.length > 0)
-  ) && allPlayersMatched && isRosterValid && isTeamValidationPassed && !isCloudSyncEnabled;
+  const isFormValid = customLeague && customTeam && allPlayersMatched && isRosterValid && !isCloudSyncEnabled;
 
   return (
     <Container sx={{ mt: 4, pb: 8 }}>
@@ -264,82 +219,37 @@ function App() {
         {/* Instructions Section */}
         <InstructionsAccordion />
 
-        {/* League and Team Selection Container */}
-        <Box display="grid" gridTemplateColumns="1fr auto 1fr" gap={2} alignItems="center">
-          <Box display="flex" flexDirection="column" gap={3}>
-            <FormControl fullWidth>
-              <InputLabel>Custom League</InputLabel>
-              <Select
-                value={customLeague?.guid || ''}
-                label="Custom League"
-                onChange={(e) => setCustomLeague(customLeagues.find(l => l.guid === e.target.value) || undefined)}
-              >
-                {customLeagues.map((league) => (
-                  <MenuItem key={league.guid} value={league.guid}>{league.name}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+        {/* League and Team Selection */}
+        <Box display="flex" flexDirection="row" gap={3}>
+          <FormControl fullWidth>
+            <InputLabel>Select League</InputLabel>
+            <Select
+              value={customLeague?.guid || ''}
+              label="Select League"
+              onChange={(e) => setCustomLeague(customLeagues.find(l => l.guid === e.target.value) || undefined)}
+            >
+              {customLeagues.map((league) => (
+                <MenuItem key={league.guid} value={league.guid}>{league.name}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
-            <FormControl fullWidth>
-              <InputLabel>Custom Team</InputLabel>
-              <Select
-                value={customTeam?.guid || ''}
-                label="Custom Team"
-                disabled={!customLeague}
-                onChange={(e) => handleCustomTeamSelected(customLeague?.teams.find(t => t.guid === e.target.value) || undefined)}
-              >
-                {(customLeague?.teams || []).map((team) => (
-                  <MenuItem key={team.guid} value={team.guid}>
-                    <TeamMenuItem team={team} />
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Box>
-
-          <Box display="flex" alignItems="center" justifyContent="center" sx={{ width: '60px' }}>
-            <Typography variant="h4" sx={{ color: '#000', fontWeight: 'bold' }}>
-              →
-            </Typography>
-          </Box>
-
-          <Box display="flex" flexDirection="column" gap={3}>
-            <FormControl fullWidth>
-              <InputLabel>Default League to Overwrite</InputLabel>
-              <Select
-                value={selectedBuiltInLeague?.guid || ''}
-                label="League to Override"
-                onChange={(e) => setSelectedBuiltInLeague(builtInLeagues.find(l => l.guid === e.target.value) || undefined)}
-              >
-                {builtInLeagues.map((league) => (
-                  <MenuItem key={league.guid} value={league.guid}>{league.name}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <FormControl fullWidth>
-              <InputLabel>Default Team to Overwrite</InputLabel>
-              <Select
-                value={selectedBuiltInTeam?.guid || ''}
-                label="Team to Override"
-                disabled={!selectedBuiltInLeague}
-                onChange={(e) => setSelectedBuiltInTeam(selectedBuiltInLeague?.teams.find(t => t.guid === e.target.value) || undefined)}
-              >
-                {(selectedBuiltInLeague?.teams || []).map((team) => (
-                  <MenuItem key={team.guid} value={team.guid}>
-                    <TeamMenuItem team={team} />
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Box>
+          <FormControl fullWidth>
+            <InputLabel>Select Team</InputLabel>
+            <Select
+              value={customTeam?.guid || ''}
+              label="Select Team"
+              disabled={!customLeague}
+              onChange={(e) => handleCustomTeamSelected(customLeague?.teams.find(t => t.guid === e.target.value) || undefined)}
+            >
+              {(customLeague?.teams || []).map((team) => (
+                <MenuItem key={team.guid} value={team.guid}>
+                  <TeamMenuItem team={team} />
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </Box>
-
-        {duplicateTeamError && (
-          <Alert severity="error" sx={{ mt: 1 }}>
-            {duplicateTeamError}
-          </Alert>
-        )}
 
         <Box display="flex" alignItems="center" gap={2}>
           <TextField
@@ -363,11 +273,11 @@ function App() {
           </Box>
         )}
 
-        {validationMessage && (
-          <Alert severity={validationMessage.type}>
-            {validationMessage.message}
-          </Alert>
-        )}
+        <ValidationBanner 
+          validationMessage={validationMessage}
+          onRefresh={handleRefreshValidation}
+          isRefreshing={isRefreshingLeague}
+        />
 
         <TableContainer component={Paper}>
           <Table size="small" sx={{ '& .MuiTableCell-root': { py: 1 } }}>
@@ -513,55 +423,20 @@ function App() {
         </Alert>
       </Snackbar>
 
-      <Snackbar 
-        open={restoreSuccess} 
-        autoHideDuration={6000} 
-        onClose={() => setRestoreSuccess(false)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert 
-          onClose={() => setRestoreSuccess(false)} 
-          severity="success" 
-          sx={{ width: '100%' }}
-        >
-          Backup restored successfully! Original league files have been restored.
-        </Alert>
-      </Snackbar>
-
-      <Snackbar 
-        open={!!restoreError} 
-        autoHideDuration={8000} 
-        onClose={() => setRestoreError(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert 
-          onClose={() => setRestoreError(null)} 
-          severity="error" 
-          sx={{ width: '100%' }}
-        >
-          Error: {restoreError}
-        </Alert>
-      </Snackbar>
-
       {/* Status Toolbar */}
       <StatusToolbar
         saveDirectory={saveDirectory}
         setSaveDirectory={setSaveDirectory}
-        assetsDirectory={assetsDirectory}
-        setAssetsDirectory={setAssetsDirectory}
         steamInstallDirectory={steamInstallDirectory}
         setSteamInstallDirectory={setSteamInstallDirectory}
         steamIdWarning={steamIdWarning}
         cloudSyncWarning={cloudSyncWarning}
         isCloudSyncEnabled={isCloudSyncEnabled}
         isSaveDirectoryValid={isSaveDirectoryValid}
-        isAssetsDirectoryValid={isAssetsDirectoryValid}
         isSteamInstallDirectoryValid={isSteamInstallDirectoryValid}
         isCheckingCloudSync={isCheckingCloudSync}
         recheckCloudSync={recheckCloudSync}
-        lastBackupDate={lastBackupDate}
-        onRestoreBackup={handleRestoreBackup}
-        isRestoreLoading={isRestoreLoading}
+        onRestoreSuccess={refreshLeagues}
       />
     </Container>
   );

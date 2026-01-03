@@ -402,7 +402,7 @@ export function updatePositionPlayerAttributes(
     return { success: true, warnings };
 }
 
-export async function updateCustomPlayerAttributes(customTeamGuid: any, customDbPath: string, playerPairs: PlayerComparison[]): Promise<void> {
+export async function updatePlayerAttributes(customTeamGuid: any, customDbPath: string, playerPairs: PlayerComparison[]): Promise<void> {
     console.log(`=== Updating Player Attributes for team GUID: ${customTeamGuid.toString('hex').toUpperCase().replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/, '$1-$2-$3-$4-$5')} ===`);
     const customDb = new DatabaseSync(customDbPath);
     

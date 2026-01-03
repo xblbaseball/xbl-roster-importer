@@ -43,42 +43,28 @@ export function InstructionsAccordion() {
         <Typography variant="body2" sx={{ color: '#666', lineHeight: 1.6 }}>
           <strong><u>Prerequisites (Recommended):</u></strong>
           <br />
-          <strong>• Create a one-time manual backup:</strong> Steam → Super Mega Baseball 4 → Properties → Installed Files → Backup game files
-          <br />
           <strong>• Disable Steam Cloud Sync:</strong> Steam → Super Mega Baseball 4 → Properties → General → Steam Cloud (uncheck). You can re-enable this after confirming your import was successful.
           <br /><br />
 
-          <strong>1. Choose your custom team</strong>
+          <strong>1. Select your custom team</strong>
           <br />
-          Pick the team from your custom league that you want to import into the default team slot. This team's player names should match the names in your roster sheet.
+          Choose the league and team from your custom leagues that you want to update. This team's player names should match the names in your roster sheet.
           <br /><br />
           
-          <strong>2. Select a default team to replace</strong>
+          <strong>2. Load roster data</strong>
           <br />
-          Choose which team from the built-in leagues (Super Mega League, Creators Classic, or Legends League) you want to overwrite with your custom team. It's best to choose a team you never use for Pennant Race, Season, or Franchise Mode.
+          Paste your XBL roster sheet link to load player attributes. The app will update your custom team's player stats based on the spreadsheet data.
           <br /><br />
           
-          <strong>3. Load roster data</strong>
+          <strong>3. Review the changes</strong>
           <br />
-          Paste your XBL roster sheet link to automatically update player attributes based on your spreadsheet data.
+          If you loaded roster data, check the player comparison table to see what attributes will be updated. Green indicates sheet values, red shows current game values that will be changed.
           <br /><br />
           
-          <strong>4. Review the changes</strong>
+          <strong>4. Apply changes</strong>
           <br />
-          Check the player comparison table to see what attributes will be updated. Green indicates sheet values, red shows current game values that will be changed.
+          Click "Play Ball!" to save the changes to your custom league. The modified league file will be ready to use the next time Super Mega Baseball 4 is launched.
           <br /><br />
-          
-          <strong>5. Import your team</strong>
-          <br />
-          Click "Play Ball!" to complete the import process and replace the selected default team with your custom team and updated player stats. These changes will take effect the next time Super Mega Baseball 4 is launched.
-          <br /><br />
-
-          <strong>6. In-game: Copy default league and rename</strong>
-          <br />
-            After launching the game, go to the main menu and select "Customization". Find the default league containing your imported team and choose "Copy League". Rename the copied league to something like "XBL Season 20 Scrim Roster v4". Use this copy for scrimmages and seasons to avoid accidentally overwriting your imported team.
-          <br /><br />
-          
-          <em>{'Note: The selected default team will be permanently replaced. To preserve the original team, create a copy of the default league before importing. This tool also takes a backup of your default leagues the first time it is used. The defaults can be restored at any time by using Configure > Restore Backup'}</em>
         </Typography>
       </AccordionDetails>
     </Accordion>

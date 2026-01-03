@@ -2,6 +2,20 @@ import { contextBridge, ipcRenderer } from 'electron';
 import { League } from './shared/models/league';
 import { DatabasePlayer, PlayerComparison } from './shared/models/player';
 
+export interface BackupInfo {
+  filename: string;
+  leagueGuid: string;
+  leagueName: string;
+  timestamp: Date;
+  filePath: string;
+}
+
+export interface LeagueBackups {
+  leagueGuid: string;
+  leagueName: string;
+  backups: BackupInfo[];
+}
+
 export interface ElectronAPI {
   checkDirectory: (path: string) => Promise<boolean>;
   getUsername: () => Promise<string>;
@@ -15,13 +29,12 @@ export interface ElectronAPI {
     error?: string;
   }>;
   loadCustomLeagues: (saveDirectory: string) => Promise<boolean>;
-  loadBuiltInLeagues: (assetsDirectory: string) => Promise<boolean>;
-  readBuiltInLeagues: () => Promise<League[]>;
   readCustomLeagues: () => Promise<League[]>;
   loadPlayersByTeam: (teamGuid: string, databasePath: string) => Promise<DatabasePlayer[]>;
-  playBall: (builtInTeamName: string, customTeamName: string, builtInDbPath: string, customDbPath: string, saveDirectory: string, assetsDirectory: string, playerPairs?: PlayerComparison[]) => Promise<boolean>;
-  restoreFromBackup: (assetsDirectory: string) => Promise<boolean>;
-  getBackupInfo: (assetsDirectory: string) => Promise<{ lastBackupDate?: Date; backupExists: boolean }>;
+  playBall: (teamGuid: string, databasePath: string, saveDirectory: string, playerPairs?: PlayerComparison[]) => Promise<boolean>;
+  getLeagueBackups: () => Promise<LeagueBackups[]>;
+  restoreLeagueBackup: (backupFilePath: string, saveDirectory: string) => Promise<string>;
+  openBackupsFolder: () => Promise<string>;
 }
 
 contextBridge.exposeInMainWorld('electronAPI', {
@@ -30,12 +43,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   findSteamIds: (baseDirectory: string) => ipcRenderer.invoke('find-steam-ids', baseDirectory),
   checkSteamCloudSync: (gameSaveSteamId: string, steamInstallDirectory: string) => ipcRenderer.invoke('check-steam-cloud-sync', gameSaveSteamId, steamInstallDirectory),
   loadCustomLeagues: (saveDirectory: string) => ipcRenderer.invoke('load-custom-leagues', saveDirectory),
-  loadBuiltInLeagues: (assetsDirectory: string) => ipcRenderer.invoke('load-built-in-leagues', assetsDirectory),
-  readBuiltInLeagues: () => ipcRenderer.invoke('read-built-in-leagues'),
   readCustomLeagues: () => ipcRenderer.invoke('read-custom-leagues'),
   loadPlayersByTeam: (teamGuid: string, databasePath: string) => ipcRenderer.invoke('load-players-by-team', teamGuid, databasePath),
-  playBall: (builtInTeamName: string, customTeamName: string, builtInDbPath: string, customDbPath: string, saveDirectory: string, assetsDirectory: string, playerPairs?: PlayerComparison[]) => 
-    ipcRenderer.invoke('play-ball', builtInTeamName, customTeamName, builtInDbPath, customDbPath, saveDirectory, assetsDirectory, playerPairs),
-  restoreFromBackup: (assetsDirectory: string) => ipcRenderer.invoke('restore-from-backup', assetsDirectory),
-  getBackupInfo: (assetsDirectory: string) => ipcRenderer.invoke('get-backup-info', assetsDirectory),
+  playBall: (teamGuid: string, databasePath: string, saveDirectory: string, playerPairs?: PlayerComparison[]) => 
+    ipcRenderer.invoke('play-ball', teamGuid, databasePath, saveDirectory, playerPairs),
+  getLeagueBackups: () => ipcRenderer.invoke('get-league-backups'),
+  restoreLeagueBackup: (backupFilePath: string, saveDirectory: string) => 
+    ipcRenderer.invoke('restore-league-backup', backupFilePath, saveDirectory),
+  openBackupsFolder: () => ipcRenderer.invoke('open-backups-folder'),
 });
