@@ -20,6 +20,8 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
 import SettingsIcon from '@mui/icons-material/Settings';
 import CloseIcon from '@mui/icons-material/Close';
+import HistoryIcon from '@mui/icons-material/History';
+import { RestoreBackupModal } from './RestoreBackupModal';
 
 interface StatusToolbarProps {
   saveDirectory: string;
@@ -33,6 +35,7 @@ interface StatusToolbarProps {
   isSteamInstallDirectoryValid: boolean;
   isCheckingCloudSync: boolean;
   recheckCloudSync: () => void;
+  onRestoreSuccess?: () => void;
 }
 
 export function StatusToolbar({
@@ -47,8 +50,10 @@ export function StatusToolbar({
   isSteamInstallDirectoryValid,
   isCheckingCloudSync,
   recheckCloudSync,
+  onRestoreSuccess,
 }: StatusToolbarProps) {
   const [isConfigDialogOpen, setIsConfigDialogOpen] = useState(false);
+  const [isRestoreDialogOpen, setIsRestoreDialogOpen] = useState(false);
 
   // Determine overall system status
   const getSystemStatus = () => {
@@ -119,6 +124,17 @@ export function StatusToolbar({
 
             {/* Spacer */}
             <Box flex={1} />
+
+            {/* Restore From Backup button */}
+            <Button
+              startIcon={<HistoryIcon />}
+              size="small"
+              variant="outlined"
+              onClick={() => setIsRestoreDialogOpen(true)}
+              sx={{ color: 'text.primary', borderColor: 'grey.400' }}
+            >
+              Restore From Backup
+            </Button>
 
             {/* Settings button */}
             <Button
@@ -209,6 +225,18 @@ export function StatusToolbar({
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Restore Backup Modal */}
+      <RestoreBackupModal
+        open={isRestoreDialogOpen}
+        onClose={() => setIsRestoreDialogOpen(false)}
+        saveDirectory={saveDirectory}
+        onRestoreSuccess={() => {
+          if (onRestoreSuccess) {
+            onRestoreSuccess();
+          }
+        }}
+      />
     </>
   );
 }

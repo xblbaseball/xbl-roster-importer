@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs';
 import started from 'electron-squirrel-startup';
@@ -6,6 +6,8 @@ import { updateElectronApp } from 'update-electron-app';
 import { processSaveFiles, readCustomLeagues, saveCustomLeague } from './ipc/gameFiles';
 import { getPlayersByTeamGuid } from './ipc/database/database';
 import { updatePlayerAttributes } from "./ipc/database/playerUpdater";
+import { createLeagueBackup, getLeagueBackups, restoreLeagueBackup } from './ipc/backupService';
+import { BACKUPS_DIRECTORY_NAME } from './shared/constants';
 
 updateElectronApp();
 
@@ -211,6 +213,17 @@ ipcMain.handle('play-ball', async (_event, teamGuid, databasePath, saveDirectory
     // Convert GUID string to buffer for database operations
     const teamGuidBuffer = Buffer.from(teamGuid.replace(/-/g, ''), 'hex');
     
+    // Step 0: Create backup of the league .sav file before making any changes
+    const leagueName = path.basename(databasePath, '.sqlite');
+    const savFilePath = path.join(saveDirectory, `${leagueName}.sav`);
+    
+    if (fs.existsSync(savFilePath)) {
+      console.log(`Creating backup of ${savFilePath} before modifications...`);
+      await createLeagueBackup(savFilePath);
+    } else {
+      console.log(`No existing .sav file found at ${savFilePath}, skipping backup`);
+    }
+    
     // Step 1: Update player attributes in custom database (if roster data provided)
     if (playerPairs && playerPairs.length > 0) {
       await updatePlayerAttributes(teamGuidBuffer, databasePath, playerPairs);
@@ -225,6 +238,35 @@ ipcMain.handle('play-ball', async (_event, teamGuid, databasePath, saveDirectory
     return true;
   } catch (error) {
     console.error('Error in play-ball:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('get-league-backups', async () => {
+  try {
+    return await getLeagueBackups();
+  } catch (error) {
+    console.error('Error getting league backups:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('restore-league-backup', async (_event, backupFilePath, saveDirectory) => {
+  try {
+    return await restoreLeagueBackup(backupFilePath, saveDirectory);
+  } catch (error) {
+    console.error('Error restoring league backup:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('open-backups-folder', async () => {
+  try {
+    const backupsPath = path.join(app.getPath('temp'), BACKUPS_DIRECTORY_NAME);
+    await shell.openPath(backupsPath);
+    return backupsPath;
+  } catch (error) {
+    console.error('Error opening backups folder:', error);
     throw error;
   }
 });

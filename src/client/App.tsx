@@ -52,7 +52,7 @@ function App() {
     recheckCloudSync,
   } = useSteamDirectoryValidation();
 
-  const { customLeagues } = useGameFiles(
+  const { customLeagues, refreshLeagues } = useGameFiles(
     isSaveDirectoryValid,
     saveDirectory
   );
@@ -436,6 +436,7 @@ function App() {
         isSteamInstallDirectoryValid={isSteamInstallDirectoryValid}
         isCheckingCloudSync={isCheckingCloudSync}
         recheckCloudSync={recheckCloudSync}
+        onRestoreSuccess={refreshLeagues}
       />
     </Container>
   );
