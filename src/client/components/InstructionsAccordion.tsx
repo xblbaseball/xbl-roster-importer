@@ -54,6 +54,8 @@ export function InstructionsAccordion() {
           <strong>2. Load roster data</strong>
           <br />
           Paste your XBL roster sheet link to load player attributes. The app will update your custom team's player stats based on the spreadsheet data.
+          <br />
+          <strong>Note:</strong> Your Google Sheet must be shared with "Anyone with the link" for the tool to access it. Go to Share → General access → Anyone with the link.
           <br /><br />
           
           <strong>3. Review the changes</strong>

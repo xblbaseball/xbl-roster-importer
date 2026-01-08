@@ -20,6 +20,7 @@ import {
   Typography,
   Alert,
   Snackbar,
+  Tooltip,
 } from '@mui/material';
 import iconPng from '../../assets/icon.png';
 import { loadPlayersFromSheet } from './services/googleSheets';
@@ -263,7 +264,9 @@ function App() {
           ) : players.length > 0 ? (
             <CheckCircleIcon color="success" />
           ) : hasAttemptedSheetLoad ? (
-            <ErrorRoundedIcon color='error' />
+            <Tooltip title="Failed to load sheet. Make sure the Google Sheet is shared with 'Anyone with the link' (Share → General access → Anyone with the link)" arrow>
+              <ErrorRoundedIcon color='error' />
+            </Tooltip>
           ) : null}
         </Box>
 
