@@ -111,7 +111,7 @@ export async function loadPlayersFromSheet(sheetUrl: string): Promise<SheetData>
         // Validate the position first
         const trimmedPosition = position?.trim() || '';
         const trimmedSecondaryPosition = secondaryPosition?.trim() || '';
-        const validPositions: Position[] = ['C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF', 'IF', 'OF', 'IF/OF', '-'];
+        const validPositions: Position[] = ['C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF', 'IF', 'OF', '1B/OF', 'IF/OF', '-'];
         
         if (!validPositions.includes(trimmedPosition as Position)) {
           throw new Error(`Invalid position "${trimmedPosition}" at row ${row}. Must be one of: ${validPositions.join(', ')}`);
