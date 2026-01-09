@@ -43,7 +43,7 @@ export function InstructionsAccordion() {
         <Typography variant="body2" sx={{ color: '#666', lineHeight: 1.6 }}>
           <strong><u>Prerequisites (Recommended):</u></strong>
           <br />
-          <strong>• Disable Steam Cloud Sync:</strong> Steam → Super Mega Baseball 4 → Properties → General → Steam Cloud (uncheck). You can re-enable this after confirming your import was successful.
+          <strong>• Disable Steam Cloud Sync:</strong> Steam → Super Mega Baseball 4 → Properties → General → Steam Cloud (uncheck). You can re-enable this after confirming your import was successful. If Steam shows a "Cloud Conflict" dialog when re-enabling, click on "Local Save" (the one with the most recent timestamp) to keep your roster changes.
           <br /><br />
 
           <strong>1. Select your custom team</strong>
