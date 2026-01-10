@@ -27,18 +27,23 @@ export interface PlayerComparison {
   diffs: PlayerDiff[];
 }
 
-export function usePlayerComparison(sheetPlayers: SheetPlayer[], customPlayers: DatabasePlayer[]) {
+export interface PlayerComparisonResult {
+  comparisons: PlayerComparison[];
+  unmatchedCustomPlayers: DatabasePlayer[];
+}
+
+export function usePlayerComparison(sheetPlayers: SheetPlayer[], customPlayers: DatabasePlayer[]): PlayerComparisonResult {
   return useMemo(() => {
     const comparisons: PlayerComparison[] = sheetPlayers.map(sheetPlayer => {
-      const customPlayer = customPlayers.find(p => p.name === sheetPlayer.name);
+      const customPlayer = customPlayers.find(p => p.name.trim().toLowerCase() === sheetPlayer.name.trim().toLowerCase());
       
       if (!customPlayer) {
         return {
           sheetPlayer,
           customPlayer: null,
           isMatched: false,
-          diffs: []
-        };
+          diffs: [] as PlayerDiff[]
+        } as PlayerComparison;
       }
 
       const diffs = generatePlayerDiffs(sheetPlayer, customPlayer);
@@ -51,7 +56,10 @@ export function usePlayerComparison(sheetPlayers: SheetPlayer[], customPlayers: 
       };
     });
 
-    return comparisons;
+    const matchedNames = new Set(sheetPlayers.map(p => p.name.trim().toLowerCase()));
+    const unmatchedCustomPlayers = customPlayers.filter(cp => !matchedNames.has(cp.name.trim().toLowerCase()));
+
+    return { comparisons, unmatchedCustomPlayers };
   }, [sheetPlayers, customPlayers]);
 }
 

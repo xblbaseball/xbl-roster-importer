@@ -36,6 +36,7 @@ import { TeamMenuItem } from './components/TeamMenuItem';
 import { StatusToolbar } from './components/StatusToolbar';
 import { InstructionsAccordion } from './components/InstructionsAccordion';
 import { ValidationBanner } from './components/ValidationBanner';
+import { UnmatchedPlayersDialog } from './components/UnmatchedPlayersDialog';
 
 function App() {
 
@@ -70,8 +71,10 @@ function App() {
   const [playBallSuccess, setPlayBallSuccess] = useState(false);
   const [playBallError, setPlayBallError] = useState<string | null>(null);
   const [isRefreshingLeague, setIsRefreshingLeague] = useState(false);
+  const [unmatchedDialogOpen, setUnmatchedDialogOpen] = useState(false);
 
-  const playerComparisons = usePlayerComparison(players, customPlayers);
+  const { comparisons: playerComparisons, unmatchedCustomPlayers } = usePlayerComparison(players, customPlayers);
+
   const { isPlayerValid, isRosterValid, validationMessage } = usePlayerValidation(players);
 
   useEffect(() => {
@@ -314,7 +317,9 @@ function App() {
                   }}>
                     <TableCell>{comparison.sheetPlayer.name} {comparison.sheetPlayer.position}</TableCell>
                     <TableCell>
-                      {comparison.isMatched ? (
+                      {!customTeam ? (
+                        <span style={{ color: '#757575', fontStyle: 'italic' }}>Select a team to match players</span>
+                      ) : comparison.isMatched ? (
                         <Box display="flex" alignItems="center" gap={2}>
                           <div>{`Matched - ${comparison.customPlayer!.name} ${comparison.customPlayer!.position}`}</div>
                           <CheckCircleIcon color="success" />
@@ -323,6 +328,14 @@ function App() {
                         <Box display="flex" alignItems="center" gap={2}>
                           <div>Player Not Found</div>
                           <ErrorRoundedIcon color="error" />
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => setUnmatchedDialogOpen(true)}
+                            sx={{ ml: 1, textTransform: 'none', fontSize: '0.75rem' }}
+                          >
+                            View Unmatched
+                          </Button>
                         </Box>
                       )}
                     </TableCell>
@@ -440,6 +453,13 @@ function App() {
         isCheckingCloudSync={isCheckingCloudSync}
         recheckCloudSync={recheckCloudSync}
         onRestoreSuccess={refreshLeagues}
+      />
+
+      {/* Unmatched Players Dialog */}
+      <UnmatchedPlayersDialog
+        open={unmatchedDialogOpen}
+        onClose={() => setUnmatchedDialogOpen(false)}
+        unmatchedPlayers={unmatchedCustomPlayers}
       />
     </Container>
   );
