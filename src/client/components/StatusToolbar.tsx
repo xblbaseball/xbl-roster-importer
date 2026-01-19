@@ -35,6 +35,8 @@ interface StatusToolbarProps {
   isSteamInstallDirectoryValid: boolean;
   isCheckingCloudSync: boolean;
   recheckCloudSync: () => void;
+  cloudSyncOverride: boolean;
+  setCloudSyncOverride: (value: boolean) => void;
   onRestoreSuccess?: () => void;
 }
 
@@ -50,6 +52,8 @@ export function StatusToolbar({
   isSteamInstallDirectoryValid,
   isCheckingCloudSync,
   recheckCloudSync,
+  cloudSyncOverride,
+  setCloudSyncOverride,
   onRestoreSuccess,
 }: StatusToolbarProps) {
   const [isConfigDialogOpen, setIsConfigDialogOpen] = useState(false);
@@ -58,7 +62,7 @@ export function StatusToolbar({
   // Determine overall system status
   const getSystemStatus = () => {
     if (!isSaveDirectoryValid) return 'error';
-    if (isCloudSyncEnabled) return 'warning';
+    if (isCloudSyncEnabled && !cloudSyncOverride) return 'warning';
     return 'success';
   };
 
@@ -200,18 +204,30 @@ export function StatusToolbar({
 
             {cloudSyncWarning && (
               <Alert 
-                severity={isCloudSyncEnabled ? "error" : "info"}
+                severity={isCloudSyncEnabled && !cloudSyncOverride ? "error" : "info"}
                 action={
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    onClick={recheckCloudSync}
-                    disabled={isCheckingCloudSync}
-                    startIcon={isCheckingCloudSync ? <CircularProgress size={16} color="inherit" /> : undefined}
-                    sx={{ alignSelf: 'center' }}
-                  >
-                    {isCheckingCloudSync ? '' : 'Refresh'}
-                  </Button>
+                  <Box display="flex" gap={1}>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={recheckCloudSync}
+                      disabled={isCheckingCloudSync}
+                      startIcon={isCheckingCloudSync ? <CircularProgress size={16} color="inherit" /> : undefined}
+                      sx={{ alignSelf: 'center' }}
+                    >
+                      {isCheckingCloudSync ? '' : 'Refresh'}
+                    </Button>
+                    {isCloudSyncEnabled && (
+                      <Button
+                        size="small"
+                        variant={cloudSyncOverride ? "contained" : "outlined"}
+                        onClick={() => setCloudSyncOverride(!cloudSyncOverride)}
+                        sx={{ alignSelf: 'center' }}
+                      >
+                        {cloudSyncOverride ? 'Ignored' : 'Ignore'}
+                      </Button>
+                    )}
+                  </Box>
                 }
               >
                 {cloudSyncWarning}
