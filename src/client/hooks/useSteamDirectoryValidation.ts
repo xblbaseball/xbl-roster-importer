@@ -9,6 +9,7 @@ export const useSteamDirectoryValidation = () => {
   const [isSaveDirectoryValid, setIsSaveDirectoryValid] = useState(false);
   const [isSteamInstallDirectoryValid, setIsSteamInstallDirectoryValid] = useState(false);
   const [isCheckingCloudSync, setIsCheckingCloudSync] = useState(false);
+  const [cloudSyncOverride, setCloudSyncOverride] = useState(false);
 
   // Function to check cloud sync status
   const checkCloudSyncStatus = useCallback(async (steamId: string) => {
@@ -105,5 +106,7 @@ export const useSteamDirectoryValidation = () => {
     isSteamInstallDirectoryValid,
     isCheckingCloudSync,
     recheckCloudSync,
+    cloudSyncOverride,
+    setCloudSyncOverride,
   };
 };

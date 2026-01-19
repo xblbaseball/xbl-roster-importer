@@ -52,6 +52,8 @@ function App() {
     isSteamInstallDirectoryValid,
     isCheckingCloudSync,
     recheckCloudSync,
+    cloudSyncOverride,
+    setCloudSyncOverride,
   } = useSteamDirectoryValidation();
 
   const { customLeagues, refreshLeagues } = useGameFiles(
@@ -194,7 +196,7 @@ function App() {
 
   // Disable Play Ball if any player is not matched or missing required attributes
   const allPlayersMatched = playerComparisons.length === 0 || playerComparisons.every(pc => pc.isMatched);
-  const isFormValid = customLeague && customTeam && allPlayersMatched && isRosterValid && !isCloudSyncEnabled;
+  const isFormValid = customLeague && customTeam && allPlayersMatched && isRosterValid && (!isCloudSyncEnabled || cloudSyncOverride);
 
   return (
     <Container sx={{ mt: 4, pb: 8 }}>
@@ -452,6 +454,8 @@ function App() {
         isSteamInstallDirectoryValid={isSteamInstallDirectoryValid}
         isCheckingCloudSync={isCheckingCloudSync}
         recheckCloudSync={recheckCloudSync}
+        cloudSyncOverride={cloudSyncOverride}
+        setCloudSyncOverride={setCloudSyncOverride}
         onRestoreSuccess={refreshLeagues}
       />
 
